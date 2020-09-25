@@ -1,0 +1,2 @@
+# golden
+static pages
