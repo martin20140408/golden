@@ -20,7 +20,8 @@
 	<div style='padding-left:5px;height: 32px;line-height: 32px;'>
 		<button type="button" onClick="submit(this,0)" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Submit</button>
 		<button type="button" onClick="saveStorage()" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Save</button>
-		<!-- <button type="button" onClick="refreshData()" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Refresh</button>  -->
+      <!-- onClick="refreshData()" -->
+		 <button type="button"  style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Refresh</button>  
 	</div>	
 </div>
 <p style="font-size:10px;">参考系：END => 0,START=>1  |  分割比：(CURRENT-END)/(START-END)</p>
@@ -112,29 +113,29 @@
    	}
    	function format_gold(start,end,rate){
 	   	var result = 0;
-           	var increase = 0;
+          // 	var increase = 0;
    		//↑↓←→↖↗↙↘↕
    		switch(true){
    			case (rate >= 0 && parseFloat(start) < parseFloat(end)):
    			    result = parseFloat(end)-rate*parseFloat(end-start);
                 	    increase = 100*parseFloat(result-end)/parseFloat(end);
-   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+((rate <= 1)?'↘↘':'↓↓');
+   			    result = result.toFixed(2)+' '+((rate <= 1)?'↘↘':'↓↓');
    			    break;
    			case (rate < 0 && parseFloat(start) < parseFloat(end)):
    			    result = parseFloat(end)-rate*parseFloat(end-start);
                 	increase = 100*parseFloat(result-end)/parseFloat(end);
-   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+'↑↑↑';
+   			    result = result.toFixed(2)+' '+'↑↑↑';
    			    break;
    			    
    			case (rate >= 0 && parseFloat(start) >= parseFloat(end)):
    			    result = parseFloat(end)-rate*parseFloat(end-start);
                 increase = 100*parseFloat(result-end)/parseFloat(end);
-   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+((rate <= 1)?'↗↗':'↑↑');
+   			    result = result.toFixed(2)+' '+((rate <= 1)?'↗↗':'↑↑');
    			    break;
    			case (rate < 0 && parseFloat(start) >= parseFloat(end)):
    			    result = parseFloat(end)-rate*parseFloat(end-start);
                 increase = 100*parseFloat(result-end)/parseFloat(end);
-   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+'↓↓↓';
+   			    result = result.toFixed(2)+' '+'↓↓↓';
    			    break;
    			default: break;
    		}
