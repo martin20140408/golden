@@ -1,1 +1,168 @@
-hell world
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta name="viewport" content="width=device-width">
+<style>
+	ul {
+		background-color: #f5f8fb;
+		padding-left: 20px;
+	}
+	ul li{
+		list-style-type: none;
+		line-height: 24px;
+	}
+</style>
+<body>
+<div style='background-color: #eff3f9;height: auto;padding: 10px 20px;'>
+	<div style='padding-left:5px;height: 32px;line-height: 32px;'><span style="padding-right:10px;">Mark:</span> <input type="text" id='remark' name="remark"></div>
+	<div style='padding-left:5px;height: 32px;line-height: 32px;'><span style="padding-right:12px;">Start :</span> <input type="text" id='max' name="max"></div>
+	<div style='padding-left:5px;height: 32px;line-height: 32px;'><span style="padding-right:16px;">End :</span> <input type="text" id='min' name="Min"></div>
+	<div style='padding-left:5px;height: 32px;line-height: 32px;'>
+		<button type="button" onClick="submit(this,0)" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Submit</button>
+		<button type="button" onClick="saveStorage()" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Save</button>
+		<button type="button" onClick="refreshData()" style="margin-left:5px;padding: 5px 10px;border-radius: 4px;color: #fff;background-color: #409eff;border-color: #409eff;">Refresh</button>
+	</div>	
+</div>
+<p style="font-size:10px;">参考系：END => 0,START=>1  |  分割比：(CURRENT-END)/(START-END)</p>
+<ul class = 'result'>
+
+</ul>
+<div >
+	<ul id='renderStorage'>
+		
+	</ul>
+</div>
+<div id='renderCurrent' style='margin-top:10px;background-color: #eff3f9;height: auto;padding: 10px 20px;'><span style='color: red;'></span></div>
+<script>
+	//max start min end
+   renderStorage();
+   function refreshData(){
+   	   var data  = httpGet('https://japi.zhimafix.com:9977/quote/price?symbol=XAUUSD,BTCUSD');
+   	   var content = 'XAUUSD:'+data['data'][0]['bid']+' | BTCUSD:'+data['data'][1]['bid'];
+   	   document.getElementById('renderCurrent').getElementsByTagName('span')[0].innerHTML = content;
+   }
+
+   function httpGet(theUrl)
+   {
+	    var xmlHttp = new XMLHttpRequest();
+	    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+	    xmlHttp.send( null );
+	    return JSON.parse(xmlHttp.responseText);
+	}
+
+   function delStorage(el)
+   {
+   		var els = Array.prototype.slice.call( document.getElementsByClassName('delStorage'), 0 );
+   		var index = els.indexOf(event.currentTarget);
+   		var retrievedObject = localStorage.getItem('testObject');
+   		var data =  JSON.parse(retrievedObject);
+   		if (index > -1) {
+		  data.splice(index, 1);
+		}
+   		document.getElementsByTagName('ul')[1].getElementsByTagName("li")[index].remove();
+   		localStorage.setItem('testObject', JSON.stringify(data));
+   }
+   function submit(el,type){
+   	 	var e = e || window.event;  
+   	 	if(e.stopPropagation) {
+   	 		 e.stopPropagation();  
+ 		}else{
+ 			e.cancelBubble = true;
+ 		}
+   	    //type 0:submit 1 trigger submit 2 compare submit
+   	    var data = [];
+   		if(type == 1){
+   			var els = Array.prototype.slice.call( document.getElementsByClassName('triggerStorage'), 0 );
+	   		var index = els.indexOf(event.currentTarget);
+	   		var retrievedObject = localStorage.getItem('testObject');
+	   		var data =  JSON.parse(retrievedObject);
+	   		document.getElementById('max').value = data[index].max;
+        	document.getElementById('min').value = data[index].min;
+        	document.getElementById('remark').value = data[index].remark;	
+   		}else if(type == 2){
+   			var els = Array.prototype.slice.call( document.getElementsByClassName('compare'), 0 );
+	   		var index = els.indexOf(event.currentTarget);
+	   		var retrievedObject = localStorage.getItem('testObject');
+	   		var data =  JSON.parse(retrievedObject);
+   		}
+   		var start = document.getElementById('max').value; //start 1
+   		var end = document.getElementById('min').value; //0
+   		if(parseFloat(start) < parseFloat(end)){
+   			//rate为正表回调幅度  parseFloat(end)-rate*parseFloat(end-start)  rate为负表上升  (c-end) = -rate*(c-start) => (end+start*rate)/(1+rate)
+   			var radio = [-1.618,-0.618,-0.272,0,0.236,0.382,0.500,0.618,0.786,1.000,1.272,1.618,2.618,4.236];//,2.618,4.236
+   		}else{
+   			//rate为正  parseFloat(end)+rate*parseFloat(start-end)   c-end / c- start = -rate
+   			var radio = [4.236,2.618,1.618,1.272,1.000,0.786,0.618,0.5000,0.382,0.236,0,-0.272,-0.618,-1.618];//,2.618,4.236
+   		}
+   		var renderHtml = '';
+   		radio.forEach(function(value,key) {
+   			var color = (value  <= 1 && value >= 0)?'red':'orange';
+   			var compare_radio_flag = false;
+   			var append = '';
+   			if(type == 2){
+   			    compare_radio_flag = (parseFloat(data[index].max) < parseFloat(data[index].min));
+   				append = compare_radio_flag ?" => <span style='color:"+color+";'>"+format_gold(data[index].max,data[index].min,value)+"</span>":" | "+radio[radio.length-1-key].toFixed(3)+": <span style='color:"+color+";'>"+format_gold(data[index].max,data[index].min,radio[radio.length-1-key])+"</span>";
+   				
+   			}
+   			renderHtml += "<li>"+value.toFixed(3)+": <span style='color:"+color+";'>"+format_gold(start,end,value)+"</span>"+append+"</li>";
+   			//document.getElementsByTagName('ul')[0].getElementsByTagName("span")[index].innerHTML = format_gold(max,min,value);
+		});
+   		document.getElementsByTagName('ul')[0].innerHTML = renderHtml;
+   		return false;
+   	}
+   	function format_gold(start,end,rate){
+	   	var result = 0;
+           	var increase = 0;
+   		//↑↓←→↖↗↙↘↕
+   		switch(true){
+   			case (rate >= 0 && parseFloat(start) < parseFloat(end)):
+   			    result = parseFloat(end)-rate*parseFloat(end-start);
+                	    increase = 100*parseFloat(result-end)/parseFloat(end);
+   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+((rate <= 1)?'↘↘':'↓↓');
+   			    break;
+   			case (rate < 0 && parseFloat(start) < parseFloat(end)):
+   			    result = parseFloat(end)-rate*parseFloat(end-start);
+                	increase = 100*parseFloat(result-end)/parseFloat(end);
+   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+'↑↑↑';
+   			    break;
+   			    
+   			case (rate >= 0 && parseFloat(start) >= parseFloat(end)):
+   			    result = parseFloat(end)-rate*parseFloat(end-start);
+                increase = 100*parseFloat(result-end)/parseFloat(end);
+   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+((rate <= 1)?'↗↗':'↑↑');
+   			    break;
+   			case (rate < 0 && parseFloat(start) >= parseFloat(end)):
+   			    result = parseFloat(end)-rate*parseFloat(end-start);
+                increase = 100*parseFloat(result-end)/parseFloat(end);
+   			    result = result.toFixed(2)+' '+increase.toFixed(2)+'% '+'↓↓↓';
+   			    break;
+   			default: break;
+   		}
+   		return result;   
+	}
+   	function saveStorage(){
+   		var max = document.getElementById('max').value;
+   		var min = document.getElementById('min').value;
+   		var remark = document.getElementById('remark').value;
+   		var retrievedObject = localStorage.getItem('testObject') || JSON.stringify([]);
+		var data =  JSON.parse(retrievedObject);
+		data.unshift({'max':max,'min':min,'remark':remark});
+		localStorage.setItem('testObject', JSON.stringify(data));
+		renderStorage();
+   	}
+   	function renderStorage(){
+   		var retrievedObject = localStorage.getItem('testObject');
+		var data =  JSON.parse(retrievedObject);
+		var storageHtml = '';
+		if(data){
+			data.forEach(function(entry) {
+			    storageHtml += '<li onclick="submit(this,1)" class="triggerStorage">'+entry.remark+'-'+entry.max+'-'+entry.min+'<span class="delStorage" onclick="delStorage(this)" style="color:red;"> X </span><span class="compare" onclick="submit(this,2)" style="color:red;"> ☆ </span></li>';
+			});
+			document.getElementById('renderStorage').innerHTML = storageHtml;
+		}
+
+   	}
+</script>
+</body>
+</html>
+
